@@ -1248,6 +1248,263 @@ public class Exercises2 {
             {'w', 'x', 'y', 'z'}
     };
 
+    public interface Vocabulary{
+        boolean add(String word);
+        boolean isPrefix(String prefix);
+        boolean contains(String word);
+
+        String getName();
+    }
+
+
+    public class ListVocabulary implements Vocabulary{
+
+        private List<String> words = new ArrayList<String>();
+
+        public ListVocabulary(Collection<String> words){
+            this.words.addAll(words);
+            Collections.sort(this.words);
+        }
+
+        @Override
+        public boolean add(String word) {
+            int pos = Collections.binarySearch(words, word);
+            // pos > 0 means word is already in the list.Insert only if it is not there yet.
+            if(pos < 0){
+                words.add(-(pos + 1), word);
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean isPrefix(String prefix) {
+            int pos = Collections.binarySearch(words, prefix);
+            if(pos >= 0){
+                // prefix is a word.Check the following word, because we are looking for words that are longer than the prefix
+                if(pos + 1 < words.size()){
+                    String nextWord = words.get(pos + 1);
+                    return nextWord.startsWith(prefix);
+                }
+                return false;
+            }
+            pos = -(pos + 1);
+            // prefix is a word. Check where it would be inserted and get the next word.
+            if(pos == words.size()){
+                return false;
+            }
+
+            String nextWord = words.get(pos);
+            return nextWord.startsWith(prefix);
+        }
+
+        @Override
+        public boolean contains(String word) {
+            int pos = Collections.binarySearch(words, word);
+            return pos >= 0;
+        }
+
+        @Override
+        public String getName() {
+            return getClass().getName();
+        }
+    }
+
+    public class TreeVocabulary extends TreeSet<String> implements Vocabulary{
+
+        private static final long serialVersionUID = 1084215309279053589L;
+
+        public TreeVocabulary(){
+            super();
+        }
+
+        public TreeVocabulary(Collection<String> words){
+            super(words);
+        }
+
+        @Override
+        public boolean isPrefix(String prefix) {
+            String nextWord = ceiling(prefix);
+            if (nextWord == null) {
+                return false;
+            }
+            if(nextWord.equals(prefix)){
+                Set<String> tail = tailSet(nextWord, false);
+                if(tail.isEmpty()){
+                    return false;
+                }
+                nextWord = tail.iterator().next();
+            }
+            return nextWord.startsWith(prefix);
+        }
+
+        @Override
+        public boolean contains(String word) {
+            return super.contains(word);
+        }
+
+        @Override
+        public String getName(){
+            return this.getClass().getName();
+        }
+    }
+
+
+    // Trie data structure
+    public class TrieNode{
+        public HashMap<Character, TrieNode> getChildren() {
+            return children;
+        }
+
+        public void setChildren(HashMap<Character, TrieNode> children) {
+            this.children = children;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        public void setContent(String content) {
+            this.content = content;
+        }
+
+        public boolean isWord() {
+            return isWord;
+        }
+
+        public void setWord(boolean word) {
+            isWord = word;
+        }
+
+        private HashMap<Character, TrieNode> children;
+        private String content;
+        private boolean isWord;
+
+
+
+    }
+
+    public class Trie{
+        public TrieNode root;
+
+        public TrieNode getRoot() {
+            return root;
+        }
+
+        public void setRoot(TrieNode root) {
+            this.root = root;
+        }
+
+        // common operation insert word
+        public void insert(String word){
+            TrieNode current = root;
+
+            for(char l : word.toCharArray()){
+                current = current.getChildren().computeIfAbsent(l, c -> new TrieNode());
+            }
+            current.setWord(true);
+        }
+
+        // common operation find word
+        public boolean find(String word){
+            TrieNode current = root;
+
+            for(int i = 0; i < word.length(); i++){
+                char c = word.charAt(i);
+                TrieNode node = current.getChildren().get(c);
+                if(node == null){
+                    return false;
+                }
+                current = node;
+            }
+            return current.isWord();
+        }
+
+        // common operation delete word
+        public void delete(String word){
+            delete(root, word, 0);
+        }
+
+        public boolean delete(TrieNode current, String word, int index){
+
+            if(index == word.length()){
+                if(!current.isWord()){
+                    return false;
+                }
+                current.setWord(false);
+                return current.getChildren().isEmpty();
+            }
+            char c = word.charAt(index);
+            TrieNode node = current.getChildren().get(c);
+            if(node == null){
+                return false;
+            }
+            boolean shouldDeleteCurrentNode = delete(node, word, index + 1) && !node.isWord();
+
+            if(shouldDeleteCurrentNode){
+                current.getChildren().remove(c);
+                return current.getChildren().isEmpty();
+            }
+            return false;
+        }
+    }
+
+    ArrayList<String> getValidT9Words(String number, Trie trie){
+        ArrayList<String> results = new ArrayList<String>();
+        getValidWords(number, 0, "", trie.getRoot(), results);
+        return results;
+    }
+
+    void getValidWords(String number, int index, String prefix, TrieNode trieNode, ArrayList<String> results){
+        // if it's a complete word, print it.
+        if(index == number.length()){
+            if(trieNode.isWord()){
+                results.add(prefix);
+            }
+            return ;
+        }
+
+        // Get characters that match this digit.
+        char digit = number.charAt(index);
+        char[] letters = getT9Chars(digit);
+
+        // Go through all remaining options
+        if(letters != null){
+            for(char letter : letters){
+                TrieNode child = trieNode.getChildren().get(letter);
+
+                if(child != null){
+                    getValidWords(number, index + 1, prefix + letter, child, results);
+                }
+            }
+        }
+    }
+
+    // Most optimal
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }
